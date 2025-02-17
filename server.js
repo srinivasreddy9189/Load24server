@@ -9,7 +9,7 @@ app.use(cors());
 
 const port = process.env.LOCAL_HOST_PORT || 3000;
 
-mongoose.connect(process.env.MONGO_DB_KEY)
+mongoose.connect('mongodb+srv://msrinivasreddy5454:Srinivas9189@cluster0.tz1obml.mongodb.net/Loader24?retryWrites=true&w=majority')
 .then(()=>console.log('DB Connected'))
 .catch(()=>console.error('DB Not Connected'))
 
