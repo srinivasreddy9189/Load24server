@@ -1,32 +1,35 @@
 const express = require('express');
 const router = express.Router();
-const {signupData,userLoadData} = require('../Dataschemes/GlobalSchema');
+const { signupData, userLoadData } = require('../Dataschemes/GlobalSchema');
 const jwtAuth = require('../Middleware/Middleware');
 
 
 //get the user profile details
-router.get('/profile',jwtAuth,async(req,res)=>{
-   try{
-    const getProfile = await signupData.findOne({_id:req.id})
-    return res.status(200).json({profile:getProfile})
-   }catch{
-       return res.status(500).json({message:'Internal Server Error'})
-   }
+router.get('/profile', jwtAuth, async (req, res) => {
+    try {
+        const getProfile = await signupData.findOne({ _id: req.id })
+        return res.status(200).json({ profile: getProfile })
+    } catch {
+        return res.status(500).json({ message: 'Internal Server Error' })
+    }
 })
 
 //allow user to post the data 
 
-router.post('/postload',jwtAuth,async(req,res)=>{
+router.post('/postload', jwtAuth, async (req, res) => {
     try {
-        const {from,to,amount,loadType,capacity,truckType,company,pickupLoc,dropLoc,contactNo,alternativeNo,createdAt} = req.body;
-        if(!from || !to || !loadType || !amount || !contactNo){
-            return res.status(400).json({message:'* Fields Are Required'})
+        const { from, to, amount, loadType, capacity, truckType, company, pickupLoc, dropLoc, contactNo, alternativeNo, createdAt, userName } = req.body;
+        const userNameId = await signupData.findById(req.id)
+        if (!from || !to || !loadType || !amount || !contactNo) {
+            return res.status(400).json({ message: '* Fields Are Required' })
         }
-        if(contactNo.length<10 ||contactNo.length>10 ||alternativeNo.length<10 ||alternativeNo.length>10  ){
-            return res.status(400).json({message:'Invalid Mobile Number'})
+        if (contactNo.length < 10 || contactNo.length > 10 || alternativeNo.length < 10 || alternativeNo.length > 10) {
+            return res.status(400).json({ message: 'Invalid Mobile Number' })
         }
+
         const newData = await new userLoadData({
-            userId:req.id,
+            userId: req.id,
+            userName: userNameId.name,
             from,
             to,
             amount,
@@ -38,13 +41,13 @@ router.post('/postload',jwtAuth,async(req,res)=>{
             dropLoc,
             contactNo,
             alternativeNo,
-            createdAt:new Date(Date.now()+10*1000)
+            createdAt: new Date(Date.now() + 10 * 1000)
         });
         newData.save();
-        return res.status(200).json({newData,message:'Load Posted!'})
-        
-    } catch{
-        return res.status(500).json({message:'Internal Server Error'})
+        return res.status(200).json({ newData, message: 'Load Posted!' })
+
+    } catch {
+        return res.status(500).json({ message: 'Internal Server Error' })
     }
 })
 
@@ -52,12 +55,12 @@ router.post('/postload',jwtAuth,async(req,res)=>{
 
 //get the load by user data
 
-router.get('/getloaddata',jwtAuth,async(req,res)=>{
+router.get('/getloaddata', jwtAuth, async (req, res) => {
     try {
-        const getLoadDetails = await userLoadData.find({userId:req.id}).sort({createdAt:-1});
-        return res.status(200).json({getLoadDetails,message:'User Load Details'})
+        const getLoadDetails = await userLoadData.find({ userId: req.id }).sort({ createdAt: -1 });
+        return res.status(200).json({ getLoadDetails, message: 'User Load Details' })
     } catch {
-        return res.status(500).json({message:'Internal Server Error'}) 
+        return res.status(500).json({ message: 'Internal Server Error' })
     }
 })
 
@@ -123,7 +126,7 @@ router.delete('/deleteload/:id', jwtAuth, async (req, res) => {
 //get loads details
 router.get('/getloaddata/:id', jwtAuth, async (req, res) => {
     try {
-        const { id } = req.params; 
+        const { id } = req.params;
         const loadDetails = await userLoadData.findOne({ _id: id });
         if (!loadDetails) {
             return res.status(404).json({ message: "Load data not found" });
@@ -136,16 +139,30 @@ router.get('/getloaddata/:id', jwtAuth, async (req, res) => {
     }
 });
 
-//get all the loads data 
-
-router.get('/getallloads',jwtAuth,async(req,res)=>{
+//search the load data by from and to location & get all the loads data
+router.get('/getallloads', jwtAuth, async (req, res) => {
     try {
-        const getAllLoads = await userLoadData.find().sort({createdAt:-1});
-        return res.status(200).json({getAllLoads,message:'All the Loads Are Displayed'}) 
-    } catch{
-        return res.status(500).json({message:'Internal Server Error'}) 
+        const { from, to } = req.query;
+        let searchQuery = {};
+        if (from) {
+            searchQuery.from = { $regex: from, $options: 'i' };
+        }
+        if (to) {
+            searchQuery.to = { $regex: to, $options: 'i' };
+        }
+        const getAllLoads = await userLoadData.find(searchQuery);
+        if (!getAllLoads || getAllLoads.length === 0) {
+            return res.status(404).json({ message: 'No Load Data Found' });
+        }
+        return res.status(200).json({ getAllLoads, message: 'Load Data Retrieved Successfully' });
+
+    } catch (error) {
+        console.error('Error fetching load data:', error);
+        return res.status(500).json({ message: 'Internal Server Error' });
     }
-})
+});
+
+
 
 
 

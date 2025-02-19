@@ -27,7 +27,7 @@ router.post('/signup',async(req,res)=>{
             const hashedPassword = await bcrypt.hash(password,10) 
             const newData = new signupData({ email,name, mobile, password:hashedPassword});
             newData.save();
-            return res.status(200).json({message:'Captain Registered Successfully'})
+            return res.status(200).json({message:'Registered Successfully'})
         }else{
             return res.status(409).json({message:'Email Or Mobile Number Exists'})
         }
@@ -48,7 +48,7 @@ router.post('/login',async(req,res)=>{
             return res.status(400).json({message:'Enter Mobile Number and Password'})  
         }
         if(!findUser){
-            return res.status(404).json({message:'Captain not found'}) 
+            return res.status(404).json({message:'User not found'}) 
         }
         const matchPassword = await bcrypt.compare(password,findUser.password);
         if(!matchPassword){
@@ -58,7 +58,7 @@ router.post('/login',async(req,res)=>{
             id:findUser._id
         }
         const accessToken = jwt.sign(payLoad, process.env.JWT_SECRET_KEY,{expiresIn:'1d'})
-        return res.status(200).json({accessToken,message:'Captain Login Success'})
+        return res.status(200).json({accessToken,message:'Login Success'})
     }catch(error){
         return res.status(500).json({message:'Internal Server Error'})
     }
@@ -74,7 +74,7 @@ router.put('/forgotpassword',async(req,res)=>{
             return res.status(400).json({message:'All Fields Are Required'})  
         }
         if(!findUser){
-            return res.status(404).json({message:'Captain Not Found With This Mobile Number!'})
+            return res.status(404).json({message:'User Not Found With This Mobile Number!'})
         }
        
         if(password !== confirmPassword){
