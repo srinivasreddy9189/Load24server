@@ -18,7 +18,7 @@ router.get('/profile',jwtAuth,async(req,res)=>{
 
 router.post('/postload',jwtAuth,async(req,res)=>{
     try {
-        const {from,to,amount,loadType,capacity,truckType,company,pickupLoc,dropLoc,contactNo,alternativeNo} = req.body;
+        const {from,to,amount,loadType,capacity,truckType,company,pickupLoc,dropLoc,contactNo,alternativeNo,createdAt} = req.body;
         if(!from || !to || !loadType || !amount || !contactNo){
             return res.status(400).json({message:'* Fields Are Required'})
         }
@@ -37,7 +37,8 @@ router.post('/postload',jwtAuth,async(req,res)=>{
             pickupLoc,
             dropLoc,
             contactNo,
-            alternativeNo
+            alternativeNo,
+            createdAt:new Date(Date.now()+10*1000)
         });
         newData.save();
         return res.status(200).json({newData,message:'Load Posted!'})
@@ -59,6 +60,66 @@ router.get('/getloaddata',jwtAuth,async(req,res)=>{
         return res.status(500).json({message:'Internal Server Error'}) 
     }
 })
+
+//edit the posted data
+router.put('/updateload/:id', jwtAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {
+            from, to, amount, loadType, capacity, truckType,
+            company, pickupLoc, dropLoc, contactNo, alternativeNo
+        } = req.body;
+
+        const existingLoad = await userLoadData.findOne({ _id: id, userId: req.id });
+
+        if (!existingLoad) {
+            return res.status(404).json({ message: 'Load Data Not Found or Unauthorized' });
+        }
+        existingLoad.from = from;
+        existingLoad.to = to;
+        existingLoad.amount = amount;
+        existingLoad.loadType = loadType;
+        existingLoad.capacity = capacity;
+        existingLoad.truckType = truckType;
+        existingLoad.company = company;
+        existingLoad.pickupLoc = pickupLoc;
+        existingLoad.dropLoc = dropLoc;
+        existingLoad.contactNo = contactNo;
+        existingLoad.alternativeNo = alternativeNo;
+
+        await existingLoad.save();
+
+        return res.status(200).json({ existingLoad, message: 'Load Data Updated Successfully' });
+
+    } catch (error) {
+        console.error('Error updating load:', error);
+        return res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+//delete the user load data
+
+router.delete('/deleteload/:id', jwtAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const existingLoad = await userLoadData.findOne({ _id: id, userId: req.id });
+
+        if (!existingLoad) {
+            return res.status(404).json({ message: 'Load Data Not Found or Unauthorized' });
+        }
+
+        await existingLoad.deleteOne();
+
+        return res.status(200).json({ message: 'Load Data Deleted Successfully' });
+
+    } catch (error) {
+        console.error('Error deleting load:', error);
+        return res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+
 //get loads details
 router.get('/getloaddata/:id', jwtAuth, async (req, res) => {
     try {

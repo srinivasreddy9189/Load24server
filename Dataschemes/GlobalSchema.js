@@ -28,7 +28,7 @@ const userLoadDataSchema = new mongoose.Schema({
     dropLoc:{type:String,required:false},
     contactNo:{type:String,required:false},
     alternativeNo:{type:String,required:false},
-    createdAt: { type: Date, default: Date.now(), expires:1 }
+    createdAt: { type: Date, index:{expires:10} }
 });
 
 const userLoadData = mongoose.model('LoadDetails',userLoadDataSchema);
