@@ -150,7 +150,7 @@ router.get('/getallloads', jwtAuth, async (req, res) => {
         if (to) {
             searchQuery.to = { $regex: to, $options: 'i' };
         }
-        const getAllLoads = await userLoadData.find(searchQuery);
+        const getAllLoads = await userLoadData.find(searchQuery).sort({createdAt:-1});
         if (!getAllLoads || getAllLoads.length === 0) {
             return res.status(404).json({ message: 'No Load Data Found' });
         }
