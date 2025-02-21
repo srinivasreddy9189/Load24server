@@ -142,18 +142,27 @@ router.get('/getloaddata/:id', jwtAuth, async (req, res) => {
 //search the load data by from and to location & get all the loads data
 router.get('/getallloads', jwtAuth, async (req, res) => {
     try {
-        const { from, to } = req.query;
+        const { from, to ,search} = req.query;
         let searchQuery = {};
+        if(search){
+            searchQuery.from = {$regex:search,$options:'i'}
+        }
         if (from) {
-            searchQuery.from = { $regex: from, $options: 'i' };
+            const fromArray = from.split(',').map(location => new RegExp(location.trim(), 'i'));
+            searchQuery.from = { $in: fromArray };
         }
+
         if (to) {
-            searchQuery.to = { $regex: to, $options: 'i' };
+            const toArray = to.split(',').map(location => new RegExp(location.trim(), 'i'));
+            searchQuery.to = { $in: toArray };
         }
-        const getAllLoads = await userLoadData.find(searchQuery).sort({createdAt:-1});
+
+        const getAllLoads = await userLoadData.find(searchQuery).sort({ createdAt: -1 });
+
         if (!getAllLoads || getAllLoads.length === 0) {
             return res.status(404).json({ message: 'No Load Data Found' });
         }
+
         return res.status(200).json({ getAllLoads, message: 'Load Data Retrieved Successfully' });
 
     } catch (error) {
@@ -161,12 +170,6 @@ router.get('/getallloads', jwtAuth, async (req, res) => {
         return res.status(500).json({ message: 'Internal Server Error' });
     }
 });
-
-
-
-
-
-
 
 
 module.exports = router;
