@@ -29,7 +29,8 @@ const userLoadDataSchema = new mongoose.Schema({
     contactNo:{type:String,required:false},
     alternativeNo:{type:String,required:false},
     userName:{type:String,required:false},
-    createdAt: { type: Date, index:{expires:10} }
+    scheduleDate:{type:String,required:false},
+    createdAt: { type: Date }
 });
 
 const userLoadData = mongoose.model('LoadDetails',userLoadDataSchema);

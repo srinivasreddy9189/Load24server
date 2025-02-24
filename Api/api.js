@@ -18,9 +18,9 @@ router.get('/profile', jwtAuth, async (req, res) => {
 
 router.post('/postload', jwtAuth, async (req, res) => {
     try {
-        const { from, to, amount, loadType, capacity, truckType, company, pickupLoc, dropLoc, contactNo, alternativeNo, createdAt, userName } = req.body;
+        const { from, to, amount, loadType, capacity, truckType, company, pickupLoc, dropLoc, contactNo, alternativeNo, createdAt, userName,scheduleDate } = req.body;
         const userNameId = await signupData.findById(req.id)
-        if (!from || !to || !loadType || !amount || !contactNo) {
+        if (!from || !to || !loadType || !amount || !contactNo || !scheduleDate ) {
             return res.status(400).json({ message: '* Fields Are Required' })
         }
         if (contactNo.length < 10 || contactNo.length > 10 || alternativeNo.length < 10 || alternativeNo.length > 10) {
@@ -41,6 +41,7 @@ router.post('/postload', jwtAuth, async (req, res) => {
             dropLoc,
             contactNo,
             alternativeNo,
+            scheduleDate,
             createdAt: new Date(Date.now() + 10 * 1000)
         });
         newData.save();
