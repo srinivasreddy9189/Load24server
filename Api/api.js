@@ -18,9 +18,9 @@ router.get('/profile', jwtAuth, async (req, res) => {
 
 router.post('/postload', jwtAuth, async (req, res) => {
     try {
-        const { from, to, amount, loadType, capacity, truckType, company, pickupLoc, dropLoc, contactNo, alternativeNo, createdAt, userName,scheduleDate } = req.body;
+        const { from, to, amount, loadType, capacity, truckType, company, pickupLoc, dropLoc, contactNo, alternativeNo, createdAt, userName, scheduleDate } = req.body;
         const userNameId = await signupData.findById(req.id)
-        if (!from || !to || !loadType || !amount || !contactNo || !scheduleDate ) {
+        if (!from || !to || !loadType || !amount || !contactNo || !scheduleDate) {
             return res.status(400).json({ message: '* Fields Are Required' })
         }
         if (contactNo.length < 10 || contactNo.length > 10 || alternativeNo.length < 10 || alternativeNo.length > 10) {
@@ -143,34 +143,59 @@ router.get('/getloaddata/:id', jwtAuth, async (req, res) => {
 //search the load data by from and to location & get all the loads data
 router.get('/getallloads', jwtAuth, async (req, res) => {
     try {
-        const { from, to ,search} = req.query;
+        const { from, to, search, page = 1, limit = 10 } = req.query;
+
         let searchQuery = {};
-        if(search){
-            searchQuery.from = {$regex:search,$options:'i'}
+
+        // 🔍 Search by starting location
+        if (search) {
+            searchQuery.from = { $regex: search, $options: 'i' };
         }
+
+        //  Filter by "from" locations
         if (from) {
             const fromArray = from.split(',').map(location => new RegExp(location.trim(), 'i'));
             searchQuery.from = { $in: fromArray };
         }
 
+        //  Filter by "to" locations
         if (to) {
             const toArray = to.split(',').map(location => new RegExp(location.trim(), 'i'));
             searchQuery.to = { $in: toArray };
         }
 
-        const getAllLoads = await userLoadData.find(searchQuery).sort({ createdAt: -1 });
+        //  Calculate pagination values
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+        const totalDocs = await userLoadData.countDocuments(searchQuery);
+        const totalPages = Math.ceil(totalDocs / limit);
+
+        // Fetch paginated data
+        const getAllLoads = await userLoadData
+            .find(searchQuery)
+            .sort({ createdAt: -1 }) // Latest first
+            .skip(skip)
+            .limit(parseInt(limit));
 
         if (!getAllLoads || getAllLoads.length === 0) {
             return res.status(404).json({ message: 'No Load Data Found' });
         }
 
-        return res.status(200).json({ getAllLoads, message: 'Load Data Retrieved Successfully' });
+        //  Return paginated response
+        return res.status(200).json({
+            getAllLoads,
+            currentPage: parseInt(page),
+            totalPages,
+            totalDocs,
+            hasMore: page < totalPages, // For frontend to know if more data exists
+            message: 'Load Data Retrieved Successfully'
+        });
 
     } catch (error) {
         console.error('Error fetching load data:', error);
         return res.status(500).json({ message: 'Internal Server Error' });
     }
 });
+
 
 
 module.exports = router;
